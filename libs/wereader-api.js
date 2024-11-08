@@ -1,42 +1,8 @@
 import { WEREAD_URL, BOOK_SHELF_URL, READING_TIMES, we_readerCookies } from "./constant.js";
+import MyFetch from "./MyFetch.js";
 
-const getHeaders = () => {
-    return {
-        'cookie': we_readerCookies,
 
-    }
-}
 
-const fetchWithCookie = async (url) => {
-
-    const response = await fetch(url, {
-        headers: getHeaders()
-    });
-    if (!response.ok) {
-        throw new Error(`fetch URL ${url} failed with : + ${response.statusText}`)
-    }
-    return await response.json();
-}
-
-const getConnect = async () => {
-    // request first to valid the cookie
-    try {
-        await fetch(WEREAD_URL, {
-            headers: getHeaders(),
-            method: 'get',
-            redirect: "follow"
-        })
-            .then(result => console.log('succeed? ' + result.ok))
-            .catch(error => {
-                console.log('internal: ' + error)
-                throw new Error(`fetch URL ${WEREAD_URL} failed with : + ${error}`)
-            });
-    } catch (e) {
-        console.log('entenal: ' + e)
-        throw(e);
-    }
-
-}
 
 export const getShelt = async () => {
     // synckey=1730013368&teenmode=0&album=1&onlyBookid=0
@@ -51,8 +17,10 @@ export const getShelt = async () => {
 }
 
 
-export const getReadingTimes = async (syncid) => {
-
-    await getConnect();
-    return await fetchWithCookie(`${READING_TIMES}?synckey=${syncid}`).catch(error => {throw(error)});
+export const getWrReadingTimes = async (syncId) => {
+    const myFetch = new MyFetch();
+    const cookies = await myFetch.syncCookies(WEREAD_URL);
+    console.log(cookies);
+    const readingTimeURL = `${READING_TIMES}?synckey=${syncId}`;
+    return await myFetch.request(readingTimeURL);
 }

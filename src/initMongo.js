@@ -7,12 +7,16 @@ const initSynckeyDocument = async () => {
     try {
         const dbInstance = new MongoDBManager(getDbString(),'wereader');
         await dbInstance.connect();
-        const result =await dbInstance.insertOne('sync_history', {
+        await dbInstance.insertOne('sync_history', {
             keyName: 'readingTime',
             keyValue: 0
         });
+        await dbInstance.insertOne('sync_history', {
+            keyName: 'registerTime',
+            keyValue: 0
+        });
         await dbInstance.disconnect();
-        return result;
+
     } catch(error) {
         console.error('init sync database failed: ' + error);
         throw(error);
@@ -21,10 +25,10 @@ const initSynckeyDocument = async () => {
 
 
 export const initDb = async() => {
-    // initSynckeyDocument().then(result => {
-    //     console.log(result);
-    // }).catch(error => {
-    //     console.log(`error occured!!! ${error}`)
-    // });
+    initSynckeyDocument().then(result => {
+        console.log('init we reader database successfully.');
+    }).catch(error => {
+        console.log(`error occured!!! ${error}`)
+    });
 
 }

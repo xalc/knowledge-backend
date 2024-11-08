@@ -1,24 +1,34 @@
-import { getReadingTimes } from '../libs/wereader-api.js';
-import {getSyncId, updateReadingTimes,updateSyncId} from "../libs/db-utils.js";
+import { getWrReadingTimes } from '../libs/wereader-api.js';
+import {getSyncId, updateReadingTimes, getDBReadingTimes, updateSyncId} from "../libs/db-utils.js";
+import { READING_TIME_SYNC_KEY} from "../libs/constant.js";
 
 const syncReadingTimes = async () => {
-    const syncId = await getSyncId('readingTime').catch(error => {throw(error)});
-    const result = await getReadingTimes(syncId).catch(error => {throw(error)});
-    const { registerTime, synckey, readTimes }= result;
-
+    //seems synckey  not working the same return from we reader...
+    const syncId = await getSyncId('READING_TIME_SYNC_KEY');
+    const result = await getWrReadingTimes(syncId);
+    const prevReadingTimes =  await getDBReadingTimes();
+    const { registTime, synckey, readTimes }= result;
+    await updateSyncId('READING_TIME_SYNC_KEY', synckey);
     const documents = [];
+    //TODO refactor for insert _id>the last one
     for (let [key, value] of Object.entries(readTimes)) {
-        const document = {
-            timeStamp: key,
-            second: value
+        if(prevReadingTimes.findIndex((item) => item._id === key)===-1){
+            const document = {
+                _id: key,
+                readingSeconds: value
+            }
+            documents.push(document);
         }
-        documents.push(document);
+
     }
+
     if(documents.length > 0) {
         documents.sort((item1, item2) => item1.timeStamp - item2.timeStamp)
-        const updatedResult = await updateReadingTimes(documents).catch(error => {throw(error)});
-        await updateSyncId('readingTime', synckey).catch(error => {throw(error)});
-        await updateSyncId('registerTime', registerTime).catch(error => {throw(error)});
+        const updatedResult = await updateReadingTimes(documents);
+        if(syncId ===0) {
+            await updateSyncId('registerTime', registTime);
+        }
+
         return updatedResult;
     }
     return {

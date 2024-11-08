@@ -4,8 +4,12 @@ const userName = process.env.MONGO_USERNAME;
 const pwd = process.env.MONGO_PASSWORD;
 const address = process.env.MONGO_ADDR;
 const port = process.env.MONGO_PORT;
-console.log(`port ${port}`)
-const WE_READER_DB_NAME = 'wereader';
+
+
+import { READING_TIMES_COLLECTION,
+    WE_READER_DB_NAME,
+    SYNC_HISTORY_COLLECTION
+} from './constant.js'
 export const getDbString = () => `mongodb://${userName}:${pwd}@${address}:${port}`;
 
 
@@ -13,7 +17,7 @@ export const getSyncId = async (key) => {
     try {
         const dbInstance = new MongoDBManager(getDbString(), WE_READER_DB_NAME);
         await dbInstance.connect();
-        const result = await dbInstance.findOne('sync_history', {
+        const result = await dbInstance.findOne('SYNC_HISTORY_COLLECTION', {
             keyName: key,
         });
         let syncId = 0;
@@ -31,7 +35,7 @@ export const updateSyncId = async (key, value) => {
     try {
         const dbInstance = new MongoDBManager(getDbString(), WE_READER_DB_NAME);
         await dbInstance.connect();
-        const result = await dbInstance.updateOne('sync_history', {
+        const result = await dbInstance.updateOne('SYNC_HISTORY_COLLECTION', {
             keyName: key,
         }, {
             $set: {
@@ -51,11 +55,22 @@ export const updateReadingTimes = async (documents) => {
     try {
         const dbInstance = new MongoDBManager(getDbString(), WE_READER_DB_NAME);
         await dbInstance.connect();
-        const result = await dbInstance.insertMany('readtimes', documents);
+        const result = await dbInstance.insertMany(READING_TIMES_COLLECTION, documents);
         await dbInstance.disconnect();
         return result;
     } catch (error) {
         console.error(`Sync Reading data failed:  ${error}`);
+        throw (error)
+    }
+}
+export const getDBReadingTimes = async() => {
+    try {
+        const dbInstance = new MongoDBManager(getDbString(), WE_READER_DB_NAME);
+        await dbInstance.connect();
+        return await dbInstance.findMany(READING_TIMES_COLLECTION,{});
+
+    } catch (error) {
+        console.error(`Get Reading data failed:  ${error}`);
         throw (error)
     }
 }

@@ -27,8 +27,7 @@ class MongoDBManager {
     async findOne(collectionName, filter) {
         try {
             const collection = this.db.collection(collectionName);
-            const result = await collection.findOne(filter);
-            return result;
+            return await collection.findOne(filter);
         } catch (error) {
             console.error('Error finding document:', error);
             throw error;
@@ -38,8 +37,7 @@ class MongoDBManager {
         try {
             const collection = this.db.collection(collectionName);
             const cursor = collection.find(filter);
-            const results = await cursor.toArray();
-            return results;
+            return await cursor.toArray();
         } catch (error) {
             console.error('Error finding documents:', error);
             throw error;
