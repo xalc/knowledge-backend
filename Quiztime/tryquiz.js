@@ -1,18 +1,24 @@
-const tryQuiz = async () => {
-    try {
-        const result = await simulatorFetch()
-            .catch(err => {
-                console.error(`inside await catch ${err.error}`);
-                // throw err;
-            });
-        if(result) {
-            console.log(`resolve: value=` + result?.value);
-        }
-    } catch (e) {
-        console.error(`try catch e: ${e.error}`)
-    }
+const tryQuiz =  async() => {
+    // try {
+    //     simulatorFetch().then((result) => {
+    //         console.log(`resolve: value=` + result?.value);
+    //     }).catch(err => {
+    //             console.error(`inside await catch ${err.error}`);
+    //             // throw err;
+    //         });
+    //
+    // } catch (e) {
+    //     console.error(`try catch e: ${e.error}`)
+    // }
     // simplest();
     // circuitThrow();
+    const result = await simulatorFetch().then(result => {
+        console.log('then: ' + result?.value);
+        return result?.value + 1;
+    }).catch(e => {
+        console.error(`catch e: ${e.error}`)
+    });
+    console.log(result)
 
 }
 const simulatorFetch = () => new Promise((resolve, reject) => {
@@ -39,8 +45,6 @@ const simulatorFetch = () => new Promise((resolve, reject) => {
                 } else
                     throw new Error('other')
             }
-
-
 })
 
 const simplest = () => {

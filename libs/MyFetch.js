@@ -1,5 +1,6 @@
-import {we_readerCookies} from "./constant.js";
+import {we_readerCookies, WEREAD_URL} from "./constant.js";
 import {default as Cookie } from 'cookie';
+
 class MyFetch {
     constructor() {
         this.headers = new Headers({
@@ -9,21 +10,11 @@ class MyFetch {
             'Content-type': 'application/json'
         });
         this.cookie = we_readerCookies;
-        this.url =null;
-    }
-    setURL(url) {
-        this.url = null;
-    }
-    getURL() {
-        return this.url;
-    }
-    setCookie (cookie) {
-        this.cookie = cookie;
-    }
-    getCookie() {
-        return this.cookie;
     }
 
+    init () {
+
+    }
     getHeader() {
         return this.headers;
     }
@@ -31,7 +22,7 @@ class MyFetch {
         const old = Cookie.parse(this.cookie);
         const newCookie = Cookie.parse(cookie);
 
-
+        console.log(`cookies key: ${newCookie.wr_skey}` )
         this.headers.set('cookie', this.cookie.replace(old.wr_skey, newCookie.wr_skey));
     }
     async syncCookies(url) {
@@ -63,4 +54,13 @@ class MyFetch {
     }
 
 }
-export default MyFetch;
+const fetchInstance = async() => {
+    const fetch = new MyFetch();
+    await fetch.syncCookies(WEREAD_URL);
+    return  () => fetch;
+
+}
+//When the project initial , the fetchInstance is executed,this should improve.
+const Singleton = (await fetchInstance())();
+// const Singleton = await fetchInstance();
+export default Singleton;

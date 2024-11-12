@@ -46,8 +46,8 @@ class MongoDBManager {
     async insertOne(collectionName, document) {
         try {
             const collection = this.db.collection(collectionName);
-            const result = await collection.insertOne(document);
-            return result;
+            return await collection.insertOne(document);
+
         } catch (error) {
             console.error('Error inserting document:', error);
             throw error;
@@ -57,8 +57,8 @@ class MongoDBManager {
     async insertMany(collectionName, documents) {
         try {
             const collection = this.db.collection(collectionName);
-            const result = await collection.insertMany(documents);
-            return result;
+            return await collection.insertMany(documents);
+
 
         }catch (error) {
             console.error('Error finding document:', error);
@@ -68,10 +68,20 @@ class MongoDBManager {
     async updateOne(collectionName, filter, update) {
         try {
             const collection = this.db.collection(collectionName);
-            const result = await collection.updateOne(filter, update);
-            return result;
+            return await collection.updateOne(filter, update);
+
         } catch (error) {
             console.error('Error updating document:', error);
+            throw error;
+        }
+    }
+    async replaceOne(collectionName, filter,doc) {
+        try {
+            const collection = this.db.collection(collectionName);
+            return await collection.findOneAndReplace(filter, doc);
+
+        } catch (error) {
+            console.error('Error replace document:', error);
             throw error;
         }
     }
@@ -79,8 +89,8 @@ class MongoDBManager {
     async updateMany(collectionName, filter, update) {
         try {
             const collection = this.db.collection(collectionName);
-            const result = await collection.updateMany(filter, update);
-            return result;
+            return await collection.updateMany(filter, update);
+
         } catch (error) {
             console.error('Error updating documents:', error);
             throw error;
@@ -90,8 +100,8 @@ class MongoDBManager {
     async deleteOne(collectionName, filter) {
         try {
             const collection = this.db.collection(collectionName);
-            const result = await collection.deleteOne(filter);
-            return result;
+            return await collection.deleteOne(filter);
+
         } catch (error) {
             console.error('Error deleting document:', error);
             throw error;
@@ -101,12 +111,15 @@ class MongoDBManager {
     async deleteMany(collectionName, filter) {
         try {
             const collection = this.db.collection(collectionName);
-            const result = await collection.deleteMany(filter);
-            return result;
+            return await collection.deleteMany(filter);
+
         } catch (error) {
             console.error('Error deleting documents:', error);
             throw error;
         }
+    }
+    async createCollection(collectionName) {
+      await this.deleteMany(collectionName, {})
     }
 
 }
