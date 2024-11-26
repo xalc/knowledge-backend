@@ -1,8 +1,7 @@
 export const WEREAD_URL = "https://weread.qq.com"
 export const BOOK_SHELF_URL = 'https://i.weread.qq.com/shelf/sync';
-export const READING_TIMES = "https://i.weread.qq.com/readdata/summary"
+export const READING_TIMES = "https://i.weread.qq.com/readdata/summary";
 
-// for database
 export const KNOWLEDGE_DB_NAME = 'knowledge';
 export const WE_READER_DB_NAME = 'wereader';
 
@@ -16,4 +15,5 @@ export const BOOKS_C = 'books';
 // for keys
 export const READING_TIME_SYNC_KEY = "readingTime";
 export const REGISTER_TIME_KEY = "registerTime";
-export const BOOKS_SYNC_KEY ='lastSyncdBooksTime'
+export const BOOKS_SYNC_KEY = 'lastSyncdBooksTime';
+export const COOKIES_TOKENS = 'cookieToken';

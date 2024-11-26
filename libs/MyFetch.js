@@ -1,47 +1,60 @@
-import {we_readerCookies, WEREAD_URL} from "./constant.js";
-import {default as Cookie } from 'cookie';
 
+import { WEREAD_URL } from "./constant.js";
+import { Cookie, CookieJar } from 'tough-cookie'
+import { getCookies } from "./database/db-utils.js";
 class MyFetch {
+
     constructor() {
-        this.headers = new Headers({
-            "cookie": we_readerCookies,
-            'content-type': 'application/json',
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36',
-            'Content-type': 'application/json'
-        });
-        this.cookie = we_readerCookies;
+        this.cookieJar = null;
+        this.cookieStr = null;
     }
 
-    init () {
+    async init() {
+
+        this.cookieJar = new CookieJar();
+        let cookieStr = await getCookies();
+
+        this.cookieStr = cookieStr;
+        cookieStr.split(';')
+            .forEach(async (c) => {
+                let cookie = Cookie.parse(c)
+                await this.cookieJar.setCookie(cookie, WEREAD_URL)
+            });
 
     }
-    getHeader() {
-        return this.headers;
-    }
-    updateHeaderCookie(cookie) {
-        const old = Cookie.parse(this.cookie);
-        const newCookie = Cookie.parse(cookie);
 
-        console.log(`cookies key: ${newCookie.wr_skey}` )
-        this.headers.set('cookie', this.cookie.replace(old.wr_skey, newCookie.wr_skey));
-    }
-    async syncCookies(url) {
-        const response = await fetch(url, {
-            headers: this.getHeader(),
+    async syncCookies() {
+
+        const response = await fetch(WEREAD_URL, {
+            method: 'get',
+            headers: {
+                "cookie": this.cookieStr,
+                'content-type': 'application/json',
+                'Content-type': 'application/json'
+            },
             credentials: 'include',
-            redirect: "follow"
         });
         if (!response.ok) {
-            throw new Error(`fetch URL ${url} failed with : + ${response.statusText}`)
+            throw new Error(`fetch URL ${WEREAD_URL} failed with : + ${response.statusText}`)
         }
-        const cookie = response.headers.get('Set-Cookie');
 
-        this.updateHeaderCookie(cookie);
-        return cookie;
+        const cookieHeaders = response.headers.get('Set-Cookie');
+        const resCookies = Cookie.parse(cookieHeaders);
+        await this.cookieJar.setCookie(resCookies, WEREAD_URL);
+
     }
     async request(url) {
-        const response = await fetch(url,{
-            headers: this.getHeader(),
+        const cookies = await this.cookieJar.getCookies(WEREAD_URL)
+        const updatedCookie = cookies.map(c => c.cookieString()).join(';');
+        const response = await fetch(url, {
+            headers: {
+
+                "cookie": updatedCookie,
+                'content-type': 'application/json',
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36',
+                'Content-type': 'application/json'
+
+            },
             credentials: 'include',
             redirect: "follow"
         });
@@ -54,10 +67,12 @@ class MyFetch {
     }
 
 }
-const fetchInstance = async() => {
+const fetchInstance = async () => {
     const fetch = new MyFetch();
+
+    await fetch.init();
     await fetch.syncCookies(WEREAD_URL);
-    return  () => fetch;
+    return () => fetch;
 
 }
 //When the project initial , the fetchInstance is executed,this should improve.

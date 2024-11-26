@@ -1,5 +1,5 @@
 import MongoDBManager from "./DBInstance.js";
-import {getDbString} from "./db-utils.js";
+import { getDbString } from "./db-utils.js";
 import {
     BOOK_PROGRESS_C,
     BOOKS_C,
@@ -7,11 +7,12 @@ import {
     REGISTER_TIME_KEY,
     SYNC_HISTORY_COLLECTION,
     WE_READER_DB_NAME,
-    BOOKS_SYNC_KEY
+    BOOKS_SYNC_KEY,
+    COOKIES_TOKENS
 } from '../constant.js'
 export const initSynckeyDocument = async () => {
     try {
-        const dbInstance = new MongoDBManager(getDbString(),WE_READER_DB_NAME);
+        const dbInstance = new MongoDBManager(getDbString(), WE_READER_DB_NAME);
         await dbInstance.connect();
         await dbInstance.insertOne(SYNC_HISTORY_COLLECTION, {
             keyName: READING_TIME_SYNC_KEY,
@@ -25,17 +26,21 @@ export const initSynckeyDocument = async () => {
             keyName: BOOKS_SYNC_KEY,
             keyValue: 0
         });
+        await dbInstance.insertOne(SYNC_HISTORY_COLLECTION, {
+            keyName: COOKIES_TOKENS,
+            keyValue: 0
+        });
         await dbInstance.disconnect();
 
-    } catch(error) {
+    } catch (error) {
         console.error('init sync database failed: ' + error);
-        throw(error);
+        throw (error);
     }
 }
 
 export const initBookDocument = async () => {
     try {
-        const dbInstance = new MongoDBManager(getDbString(),WE_READER_DB_NAME);
+        const dbInstance = new MongoDBManager(getDbString(), WE_READER_DB_NAME);
         await dbInstance.connect();
 
         await dbInstance.createCollection(BOOKS_C);
@@ -45,7 +50,7 @@ export const initBookDocument = async () => {
 
     } catch (error) {
         console.error('init books and books progress:  failed' + error);
-        throw(error);
+        throw (error);
     }
 
 

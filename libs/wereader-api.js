@@ -1,4 +1,4 @@
-import { BOOK_SHELF_URL, READING_TIMES, we_readerCookies } from "./constant.js";
+import { BOOK_SHELF_URL, READING_TIMES } from "./constant.js";
 
 import Singleton from "./MyFetch.js";
 

@@ -5,14 +5,50 @@ const pwd = process.env.MONGO_PASSWORD;
 const address = process.env.MONGO_ADDR;
 const port = process.env.MONGO_PORT;
 
+const onlineDB = process.env.USE_ATLAS_DATABASE;
+const atlasName = process.env.ATLAS_NAME;
+const atlasPD = process.env.ATLAS_PD;
+const cluster = process.env.ATLAS_CLUSTER;
 
 import {
     READING_TIMES_COLLECTION,
     WE_READER_DB_NAME,
-    SYNC_HISTORY_COLLECTION, BOOKS_C, BOOK_PROGRESS_C
+    SYNC_HISTORY_COLLECTION, BOOKS_C,
+    BOOK_PROGRESS_C,
+    COOKIES_TOKENS
 } from '../constant.js'
-export const getDbString = () => `mongodb://${userName}:${pwd}@${address}:${port}`;
 
+export const getDbString = () => {
+    let dbaddr = '';
+
+    if (onlineDB === 'true') {
+        dbaddr = `mongodb+srv://${atlasName}:${atlasPD}@${cluster}?retryWrites=true&w=majority&appName=Cluster0`
+    } else {
+        dbaddr = `mongodb://${userName}:${pwd}@${address}:${port}`;
+    }
+
+    return dbaddr;
+
+};
+
+export const getCookies = async () => {
+    try {
+        const dbInstance = new MongoDBManager(getDbString(), WE_READER_DB_NAME);
+        await dbInstance.connect();
+        const result = await dbInstance.findOne(SYNC_HISTORY_COLLECTION, {
+            keyName: COOKIES_TOKENS,
+        });
+        let cookies = '';
+        if (result !== null) {
+            cookies = result.keyValue;
+        }
+        await dbInstance.disconnect();
+        return cookies;
+    } catch (error) {
+        console.error(`get weread token failed:  ${error}`);
+        throw (error);
+    }
+}
 
 export const getSyncId = async (key) => {
     try {
@@ -82,16 +118,16 @@ export const updateBookShelf = async (documents) => {
     try {
         const dbInstance = new MongoDBManager(getDbString(), WE_READER_DB_NAME);
         await dbInstance.connect();
-        let [total, replace, insert] = [documents.length, documents.length,0];
+        let [total, replace, insert] = [documents.length, documents.length, 0];
         for (const doc of documents) {
             const id = doc.bookId;
-            const replacement = await dbInstance.replaceOne(BOOKS_C,{_id: id}, {
+            const replacement = await dbInstance.replaceOne(BOOKS_C, { _id: id }, {
                 _id: id,
                 ...doc
             });
-            if(replacement === null) {
+            if (replacement === null) {
                 replace--;
-                await dbInstance.insertOne(BOOKS_C,{
+                await dbInstance.insertOne(BOOKS_C, {
                     _id: id,
                     ...doc
                 })
@@ -109,16 +145,16 @@ export const updateBookProgress = async (documents) => {
     try {
         const dbInstance = new MongoDBManager(getDbString(), WE_READER_DB_NAME);
         await dbInstance.connect();
-        let [total, replace, insert] = [documents.length, documents.length,0];
+        let [total, replace, insert] = [documents.length, documents.length, 0];
         for (const doc of documents) {
             const id = doc.bookId;
-            const replacement = await dbInstance.replaceOne(BOOK_PROGRESS_C,{_id: id}, {
+            const replacement = await dbInstance.replaceOne(BOOK_PROGRESS_C, { _id: id }, {
                 _id: id,
                 ...doc
             });
-            if(replacement === null) {
+            if (replacement === null) {
                 replace--;
-                await dbInstance.insertOne(BOOK_PROGRESS_C,{
+                await dbInstance.insertOne(BOOK_PROGRESS_C, {
                     _id: id,
                     ...doc
                 })
