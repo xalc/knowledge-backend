@@ -31,6 +31,16 @@ export const getDbString = () => {
 
 };
 
+export const getDBAddr = () => {
+    if (onlineDB === 'true') {
+        return `mongodb+srv://${cluster}?retryWrites=true&w=majority&appName=Cluster0`
+    } else {
+        return `mongodb://${address}:${port}`;
+
+    }
+
+}
+
 export const getCookies = async () => {
     try {
         const dbInstance = new MongoDBManager(getDbString(), WE_READER_DB_NAME);
@@ -88,7 +98,7 @@ export const updateSyncId = async (key, value) => {
         throw (error);
     }
 }
-export const updateReadingTimes = async (documents) => {
+export const insertReadingTimes = async (documents) => {
     try {
         const dbInstance = new MongoDBManager(getDbString(), WE_READER_DB_NAME);
         await dbInstance.connect();
@@ -97,6 +107,25 @@ export const updateReadingTimes = async (documents) => {
         return result;
     } catch (error) {
         console.error(`Sync Reading data failed:  ${error}`);
+        throw (error)
+    }
+}
+export const updateReadingTimes = async (record) => {
+    try {
+        const dbInstance = new MongoDBManager(getDbString(), WE_READER_DB_NAME);
+        await dbInstance.connect();
+        const result = await dbInstance.updateOne(READING_TIMES_COLLECTION, {
+            _id: record._id,
+        }, {
+            $set: {
+                readingSeconds: record.readingSeconds
+            }
+
+        });
+        await dbInstance.disconnect();
+        return result;
+    } catch (error) {
+        console.error(`Update reading record:  ${error}`);
         throw (error)
     }
 }

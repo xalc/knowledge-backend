@@ -1,12 +1,15 @@
 import { getShelf, getWrReadingTimes } from '../libs/wereader-api.js';
 import {
     getSyncId,
-    updateReadingTimes,
+    insertReadingTimes,
     getDBReadingTimes,
     updateSyncId,
-    updateBookShelf, updateBookProgress
+    updateBookShelf,
+    updateBookProgress,
+    getDBAddr,
+    updateReadingTimes
 } from "../libs/database/db-utils.js";
-import { BOOKS_SYNC_KEY, READING_TIME_SYNC_KEY } from "../libs/constant.js";
+import { BOOKS_SYNC_KEY, READING_TIME_SYNC_KEY, REGISTER_TIME_KEY } from "../libs/constant.js";
 
 const syncReadingTimes = async () => {
     //seems synckey  not working the same return from we reader...
@@ -19,21 +22,30 @@ const syncReadingTimes = async () => {
     const documents = [];
     //TODO refactor for insert _id>the last one
     for (let [key, value] of Object.entries(readTimes)) {
-        if (prevReadingTimes.findIndex((item) => item._id === key) === -1) {
+        let historicalIndex = prevReadingTimes.findIndex((item) => item._id === key)
+        if (historicalIndex === -1) {
             const document = {
                 _id: key,
                 readingSeconds: value
             }
             documents.push(document);
+        } else {
+            if (value !== prevReadingTimes[historicalIndex].readingSeconds) {
+                const document = {
+                    _id: key,
+                    readingSeconds: value
+                }
+                updateReadingTimes(document);
+            }
         }
 
     }
 
     if (documents.length > 0) {
         documents.sort((item1, item2) => item1.timeStamp - item2.timeStamp)
-        const updatedResult = await updateReadingTimes(documents);
+        const updatedResult = await insertReadingTimes(documents);
         if (syncId === 0) {
-            await updateSyncId('registerTime', registTime);
+            await updateSyncId(REGISTER_TIME_KEY, registTime);
         }
         await updateSyncId(READING_TIME_SYNC_KEY, synckey);
 
@@ -57,7 +69,7 @@ const syncBooksAndProgress = async () => {
     console.log(`total new books in shelf: ${counts[0]}, replaced count: ${counts[1]}, inserted count: ${counts[2]}`)
     const progressCounts = await updateBookProgress(bookProgress);
     const [total, replace, insert] = progressCounts;
-    console.log(`total new books in shelf: ${total}, replaced count: ${replace}, inserted count: ${insert}`)
+    console.log(`Update book progress: ${total}, replaced count: ${replace}, inserted count: ${insert}`)
 
     await updateSyncId(BOOKS_SYNC_KEY, synckey);
 
@@ -65,6 +77,7 @@ const syncBooksAndProgress = async () => {
 
 export const syncWeReader = async () => {
     try {
+        console.log(`using database: ${getDBAddr()}`)
         const updatedResult = await syncReadingTimes();
         if (updatedResult.acknowledged) {
             console.log(` Reading time syncing: ${updatedResult.insertedCount} item is added`);
